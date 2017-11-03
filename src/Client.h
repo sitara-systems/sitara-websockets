@@ -1,5 +1,6 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
+#include <functional>
 #include <memory>
 #include <thread>
 #include <system_error>
@@ -15,25 +16,25 @@ namespace midnight {
           mClient.clear_error_channels(websocketpp::log::elevel::all);
           mClient.init_asio();
           mClient.start_perpetual();
-          mThread = std::thread(&mClient::run, &mClient));
+          mThread = std::thread(&websocketpp::client<websocketpp::config::asio_client>::run, &mClient);
         };
 
         ~Client() {
           mClient.stop_perpetual();
 
           for (std::map<int, std::shared_ptr<Connection>>::const_iterator it = mConnectionList.begin(); it != mConnectionList.end(); ++it) {
-            if (it->second->getStatus() != Connection::ConnectionStatus::OPEN) {
+            if (it->second->getStatus() != ConnectionStatus::OPEN) {
               // Only close open connections
               continue;
             }
 
-            std::printf("Closing connection %d\n", it->second->get_id());
+            std::printf("Closing connection %d\n", it->second->getId());
 
             std::error_code errorCode;
 
-            mClient.close(it->second->get_hdl(), websocketpp::close::status::going_away, "", errorCode);
+            mClient.close(it->second->getHandle(), websocketpp::close::status::going_away, "", errorCode);
             if (errorCode) {
-                std::printf("Error closing connection %d: %s\n", it->second->get_id(), errorCode.message().c_str());
+                std::printf("Error closing connection %d: %s\n", it->second->getId(), errorCode.message().c_str());
             }
           }
 
@@ -51,7 +52,7 @@ namespace midnight {
           }
 
           int newId = mNextId++;
-          std::shared_ptr<Connection> newConnection(new Connection(newId, connection->getHandle(), uri));
+          std::shared_ptr<Connection> newConnection(new Connection(newId, connection->get_handle(), uri));
           mConnectionList[newId] = newConnection;
 
           connection->set_open_handler(std::bind(
@@ -76,7 +77,7 @@ namespace midnight {
           ));
 
           connection->set_message_handler(std::bind(
-            &Connection::onMessage,
+            &Connection::onReceive,
             newConnection,
             &mClient,
             std::placeholders::_1,
@@ -105,7 +106,7 @@ namespace midnight {
               std::printf("No Connection Found with id %d\n", id);
               return;
             }
-            mClient.close(it->second->get_hdl(), close_code, "", errorCode);
+            mClient.close(it->second->getHandle(), close_code, "", errorCode);
             if(errorCode) {
               std::printf("Error initiating close: %s\n", errorCode.message().c_str());
             }
@@ -118,7 +119,7 @@ namespace midnight {
               std::printf("No Connection Found with id %d\n", id);
               return;
             }
-            mClient.close(it->second->get_hdl(), close_code, "", errorCode);
+            mClient.close(it->second->getHandle(), close_code, "", errorCode);
             if(errorCode) {
               std::printf("Error initiating close: %s\n", errorCode.message().c_str());
             }
@@ -131,7 +132,7 @@ namespace midnight {
               std::printf("No connection found with id %d\n", id);
               return;
             }
-            mClient.send(it->second->get_hdl(), message, websocketpp::frame::opcode::text, errorCode);
+            mClient.send(it->second->getHandle(), message, websocketpp::frame::opcode::text, errorCode);
             if (errorCode) {
               std::printf("Error sending message: %s\n", errorCode.message().c_str());
               return;
@@ -146,27 +147,27 @@ namespace midnight {
               std::printf("No connection found with id %d\n", id);
               return;
             }
-            mClient.send(it->second->get_hdl(), payload, length, websocketpp::frame::opcode::binary, errorCode);
+            mClient.send(it->second->getHandle(), payload, length, websocketpp::frame::opcode::binary, errorCode);
             if (errorCode) {
               std::printf("Error sending message: %s\n", errorCode.message().c_str());
               return;
             }
-            it->second->recordMessage();
+            //it->second->recordMessage();
           }
 
-          void send(int id, client::message_ptr message) {
+          void send(int id, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
             std::error_code errorCode;
             std::map<int, std::shared_ptr<Connection>>::iterator it = mConnectionList.find(id);
             if(it == mConnectionList.end()) {
               std::printf("No connection found with id %d\n", id);
               return;
             }
-            mClient.send(it->second->get_hdl(), message, errorCode);
+            mClient.send(it->second->getHandle(), message, errorCode);
             if (errorCode) {
               std::printf("Error sending message: %s\n", errorCode.message().c_str());
               return;
             }
-            it->second->recordMessage(payload->get_payload());
+            it->second->recordMessage(message->get_payload());
           }
 
       protected:
@@ -174,6 +175,6 @@ namespace midnight {
         std::thread mThread;
         std::map<int, std::shared_ptr<Connection>> mConnectionList;
         int mNextId;
-    }
+	};
   }
 }

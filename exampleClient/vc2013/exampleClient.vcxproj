@@ -194,6 +194,10 @@
     <ClCompile Include="..\src\exampleClientApp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\Client.h" />
+    <ClInclude Include="..\..\src\Connection.h" />
+    <ClInclude Include="..\..\src\Server.h" />
+    <ClInclude Include="..\..\src\WebSockets.h" />
     <ClInclude Include="..\include\Resources.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
