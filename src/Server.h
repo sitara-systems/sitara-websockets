@@ -1,19 +1,24 @@
+#pragma once
+
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <functional>
 #include <memory>
 #include <system_error>
 
+#include "Connection.h"
+#include "Endpoint.h"
+
 namespace midnight {
   namespace websocket {
-    class Server {
+    class Server : public Endpoint {
     public:
-      Server() {
+      Server() : Endpoint() {
         mPort = 9002;
         init();
-      }
+	  };
 
-      Server(int port) {
+      Server(int port) : Endpoint () {
         mPort = port;
         init();
       };
@@ -31,31 +36,32 @@ namespace midnight {
         mServer.run();
       };
 
-      void send(std::string message) {
+      void send(int id, std::string message) {
         std::error_code errorCode;
-        mServer.send(mHandle, message, websocketpp::frame::opcode::text, errorCode);
+		std::shared_ptr<Connection> connection = getConnection(id);
+		websocketpp::client<websocketpp::config::asio_client>::message_ptr messagePtr;
+        mServer.send(connection, message, websocketpp::frame::opcode::text, errorCode);
         if (errorCode) {
           std::printf("Error sending message: %s\n", errorCode.message().c_str());
           return;
         }
-        recordMessage(message);
-      }
-
-      void send(void const * message, size_t length) {
-        std::error_code errorCode;
-        mServer.send(mHandle, message, length, websocketpp::frame::opcode::binary, errorCode);
-        if (errorCode) {
-          std::printf("Error sending message: %s\n", errorCode.message().c_str());
-          return;
-        }
-		//not sure this will work
-        //recordMessage(message);
-      }
-
-	  void addOnReceiveFn(std::function<void(std::string message)> response) {
-		  mOnReceiveFns.push_back(response);
+		messagePtr->set_payload(message);
+		connection->recordMessage(messagePtr);
 	  }
-	
+
+      void send(int id, void const * message, size_t length) {
+		  std::shared_ptr<Connection> connection = getConnection(id);
+		  std::error_code errorCode;
+		  websocketpp::client<websocketpp::config::asio_client>::message_ptr messagePtr;
+		  mServer.send(connection, message, length, websocketpp::frame::opcode::binary, errorCode);
+        if (errorCode) {
+          std::printf("Error sending message: %s\n", errorCode.message().c_str());
+          return;
+        }
+		messagePtr->set_payload(message, length);
+		connection->recordMessage(messagePtr);
+	  }
+
 	protected:
       void init() {
         mServer.set_error_channels(websocketpp::log::elevel::all);
@@ -69,7 +75,7 @@ namespace midnight {
           std::placeholders::_1
         ));
 
-	      mServer.set_fail_handler(std::bind(
+	    mServer.set_fail_handler(std::bind(
           &Server::onFail,
           this,
           &mServer,
@@ -92,45 +98,31 @@ namespace midnight {
         ));
       }
 
-        void recordMessage(std::string message) {
-          mMessages.push_back(message);
-        }
-
-        void recordMessage(websocketpp::server<websocketpp::config::asio>::message_ptr message) {
-          if(message->get_opcode() == websocketpp::frame::opcode::text) {
-            mMessages.push_back(message->get_payload());
-          }
-          else {
-            mMessages.push_back(websocketpp::utility::to_hex(message->get_payload()));
-          }
-        }	
-
-      void onOpen(websocketpp::server<websocketpp::config::asio> server, websocketpp::connection_hdl handle) {
-        std::printf("Server opened!\n");
-        mHandle = handle;
+      static void onOpen(std::shared_ptr<Server> server, websocketpp::server<websocketpp::config::asio> wsServer, websocketpp::connection_hdl handle) {
+			  std::printf("Server opened!\n");
+			  int newId = server->mNextId++;
+			  std::shared_ptr<Connection> newConnection(new Connection(newId, handle, ""));
+			  connection->setStatus(ConnectionStatus::OPEN);
+			  mConnectionList[newId] = newConnection;
       };
 
-      void onFail(websocketpp::server<websocketpp::config::asio> server, websocketpp::connection_hdl handle) {
-        mHandle = handle;
+      static void onFail(std::shared_ptr<Connection> connection, websocketpp::server<websocketpp::config::asio> server, websocketpp::connection_hdl handle) {
+		     connection->setStatus(ConnectionStatus::FAILED);
       };
 
-      void onClose(websocketpp::server<websocketpp::config::asio> server, websocketpp::connection_hdl handle) {
-        std::printf("Server closed.\n");
+      static void onClose(std::shared_ptr<Connection> connection, websocketpp::server<websocketpp::config::asio> server, websocketpp::connection_hdl handle) {
+          connection->setStatus(ConnectionStatus::CLOSED);
+          std::printf("Server closed.\n");
       };
 
-	  void onReceive(websocketpp::connection_hdl handle, websocketpp::server<websocketpp::config::asio>::message_ptr message) {
-		  for (auto callback : mOnReceiveFns) {
-			  callback(message->get_payload());
-		  }
-		  recordMessage(message);
+	  static void onReceive(std::shared_ptr<Connection> connection, websocketpp::connection_hdl handle, websocketpp::server<websocketpp::config::asio>::message_ptr message) {
+		  connection->callOnReceiveFns(message);
+		  connection->recordMessage(message);
 		  std::printf("received message %s", message->get_payload().c_str());
 	  };
 
-      websocketpp::connection_hdl mHandle;
       websocketpp::server<websocketpp::config::asio> mServer;
       int mPort;
-      std::vector<std::function<void(std::string message)> > mOnReceiveFns;
-      std::vector<std::string> mMessages;
 	};
   }
 }

@@ -3,7 +3,7 @@
 #include "cinder/gl/gl.h"
 
 #include <iostream>
-#include "Server.h"
+#include "Websockets.h"
 
 using namespace ci;
 using namespace ci::app;

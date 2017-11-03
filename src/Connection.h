@@ -1,4 +1,5 @@
-#include <websocketpp/client.hpp>
+#pragma once
+
 #include <websocketpp/common/connection_hdl.hpp>
 
 namespace midnight {
@@ -23,48 +24,12 @@ namespace midnight {
         ~Connection() {
         };
 
-        void onOpen(websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
-          mStatus = ConnectionStatus::OPEN;
-          websocketpp::client<websocketpp::config::asio_client>::connection_ptr connection = client->get_con_from_hdl(handle);
-          mServer = connection->get_response_header("Server");
-        };
-
-        void onFail(websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
-          mStatus = ConnectionStatus::FAILED;
-          websocketpp::client<websocketpp::config::asio_client>::connection_ptr connection = client->get_con_from_hdl(handle);
-          mServer = connection->get_response_header("Server");
-          mErrorReason = connection->get_ec().message();
-        };
-
-        void onClose(websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
-          mStatus = ConnectionStatus::CLOSED;
-          websocketpp::client<websocketpp::config::asio_client>::connection_ptr connection = client->get_con_from_hdl(handle);
-          // sprintf would be sloppy here, so I'm using stringstreams
-          // I'm not typically a fan of stringstreams :(
-          std::stringstream s;
-          s << "Close Code: " << connection->get_remote_close_code() << " ("
-          << websocketpp::close::status::get_string(connection->get_remote_close_code())
-          << "), Close Reason: " << connection->get_remote_close_reason();
-          mErrorReason = s.str();
-        };
-
-        void onReceive(websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
-          for (auto callback : mOnReceiveFns) {
-            callback(message->get_payload());
-		  }
-		  recordMessage(message);
-        }
-
-        void addOnReceiveFn(std::function<void(std::string message)> response) {
-	         mOnReceiveFns.push_back(response);
-        }
+		void setStatus(ConnectionStatus status) {
+			mStatus = status;
+		}
 
         ConnectionStatus getStatus() {
           return mStatus;
-        }
-
-        void recordMessage(std::string message) {
-          mMessages.push_back(message);
         }
 
         void recordMessage(websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
@@ -76,12 +41,36 @@ namespace midnight {
           }
         }
 
+		void setHandle(websocketpp::connection_hdl handle) {
+			mHandle = handle;
+		}
+
 		websocketpp::connection_hdl getHandle() {
 			return mHandle;
 		}
 
+		void setId(int id) {
+			mId = id;
+		}
+
 		int getId() {
 			return mId;
+		}
+
+		void setServer(std::string server) {
+			mServer = server;
+		}
+
+		std::string getServer() {
+			return mServer;
+		}
+
+		void setError(std::string error) {
+			mErrorReason = error;
+		}
+
+		std::string getError() {
+			return mErrorReason;
 		}
 
         void statusUpdate() {
@@ -103,6 +92,16 @@ namespace midnight {
                 return "N/A";
             }
         }
+
+        void addOnReceiveFn(std::function<void(std::string message)> response) {
+	         mOnReceiveFns.push_back(response);
+		};
+
+		void callOnReceiveFns(websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
+			for (auto callback : mOnReceiveFns) {
+				callback(message->get_payload());
+			}
+		}
 
       protected:
         int mId;
