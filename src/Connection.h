@@ -1,3 +1,4 @@
+#include <websocketpp/client.hpp>
 #include "websocketpp/common/connection_hdl.hpp"
 
 namespace midnight {
@@ -7,7 +8,7 @@ namespace midnight {
       OPEN,
       CLOSED,
       FAILED
-    }
+    };
 
     class Connection {
       public:
@@ -22,7 +23,6 @@ namespace midnight {
         ~Connection() {
         };
 
-      protected:
         void onOpen(websocketpp::client<websocketpp::config::asio_client> client, websocketpp::connection_hdl handle) {
           mStatus = ConnectionStatus::OPEN;
           websocketpp::client<websocketpp::config::asio_client>::connection_ptr connection = client->get_con_from_hdl(handle);
@@ -48,16 +48,41 @@ namespace midnight {
           mErrorReason = s.str();
         };
 
+        void onMessage(websocketpp::connectionhdl handle, client::message_ptr message) {
+          for (auto callback : mOnReceiveFns) {
+            callback(mIncomingDatagram);
+		      }
+          recordMessage(message)
+        }
+
+        void addOnReceiveFn(std::function<void(client::mesage_ptr message)> response) {
+	         mOnReceiveFns.push_back(response);
+        }
+
         ConnectionStatus getStatus() {
           return mStatus;
+        }
+
+        void recordMessage(std::string message) {
+          mMessages.push_back(message);
+        }
+
+        void recordMessage(client::message_ptr message) {
+          if(message->get_opcode() == websocketpp::frame::opcode::text) {
+            mMessages.push_back(message->get_payload());
+          }
+          else {
+            mMessages.push_back(websocketpp::utility::to_hex(message->get_payload()));
+          }
         }
 
         void statusUpdate() {
           std::printf("URI: %s\n
             Status: %s\n
             Remote Server: %s\n
-            Error/Close Reason: %s\n",
-            mUri.c_str(), getStatusString(mStatus).c_str(), mServer.c_str(), mErrorReason.c_str());
+            Error/Close Reason: %s\n
+            Messages Processed: %d\n",
+            mUri.c_str(), getStatusString(mStatus).c_str(), mServer.c_str(), mErrorReason.c_str(), mMessages.size());
         };
 
         std::string getStatusString(ConnectionStatus status) {
@@ -74,12 +99,17 @@ namespace midnight {
                 return "N/A";
             }
         }
+
+      protected:
         int mId;
         websocketpp::connection_hdl mHandle;
         ConnectionStatus mStatus;
         std::string mUri;
         std::string mServer;
         std::string mErrorReason;
+        std::vector<std::string>> mMessages;
+        std::vector<std::function<void(client::message_ptr message)> > mOnReceiveFns;
+
     }
   }
 }

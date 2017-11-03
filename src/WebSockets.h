@@ -2,5 +2,6 @@
 #define _WEBSOCKETPP_CPP11_STL_
 #endif
 
-#include "WebSocketConnection.h"
-#include "WebSocketEndpoint.h"
+#include "Connection.h"
+#include "Client.h"
+#include "Server.h"

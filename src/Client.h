@@ -11,11 +11,11 @@ namespace midnight {
       public:
         Client() {
           mNextId = 0;
-          mEndpoint.clear_access_channels(websocketpp::log::alevel::all);
-          mEndpoint.clear_error_channels(websocketpp::log::elevel::all);
-          mEndpoint.init_asio();
-          mEndpoint.start_perpetual();
-          mThread.reset(new std::thread(&mClient::run, &mEndpoint));
+          mClient.clear_access_channels(websocketpp::log::alevel::all);
+          mClient.clear_error_channels(websocketpp::log::elevel::all);
+          mClient.init_asio();
+          mClient.start_perpetual();
+          mThread = std::thread(&mClient::run, &mClient));
         };
 
         ~Client() {
@@ -37,7 +37,9 @@ namespace midnight {
             }
           }
 
-          mThread->join();
+          if(mThread.joinable()) {
+            mThread.join();
+          }
         };
 
         int connect(std::string& uri) {
@@ -59,12 +61,27 @@ namespace midnight {
             std::placeholders::_1
           ));
 
-          connection_>set_fail_handler(std::bind(
+          connection->set_fail_handler(std::bind(
             &Connection::onFail,
             newConnection,
             &mClient,
             std::placeholders::_1
-          ))
+          ));
+
+          connection->set_close_handler(std::bind(
+            &Connection::onClose,
+            newConnection,
+            &mClient,
+            std::placeholders::_1
+          ));
+
+          connection->set_message_handler(std::bind(
+            &Connection::onMessage,
+            newConnection,
+            &mClient,
+            std::placeholders::_1,
+            std::placeholders::_2
+          ));
 
           mClient.connect(connection);
           return newId;
@@ -107,9 +124,54 @@ namespace midnight {
             }
           }
 
+          void send(int id, std::string message) {
+            std::error_code errorCode;
+            std::map<int, std::shared_ptr<Connection>>::iterator it = mConnectionList.find(id);
+            if(it == mConnectionList.end()) {
+              std::printf("No connection found with id %d\n", id);
+              return;
+            }
+            mClient.send(it->second->get_hdl(), message, websocketpp::frame::opcode::text, errorCode);
+            if (errorCode) {
+              std::printf("Error sending message: %s\n", errorCode.message().c_str());
+              return;
+            }
+            it->second->recordMessage(message);
+          }
+
+          void send(int id, void const * payload, size_t length) {
+            std::error_code errorCode;
+            std::map<int, std::shared_ptr<Connection>>::iterator it = mConnectionList.find(id);
+            if(it == mConnectionList.end()) {
+              std::printf("No connection found with id %d\n", id);
+              return;
+            }
+            mClient.send(it->second->get_hdl(), payload, length, websocketpp::frame::opcode::binary, errorCode);
+            if (errorCode) {
+              std::printf("Error sending message: %s\n", errorCode.message().c_str());
+              return;
+            }
+            it->second->recordMessage();
+          }
+
+          void send(int id, client::message_ptr message) {
+            std::error_code errorCode;
+            std::map<int, std::shared_ptr<Connection>>::iterator it = mConnectionList.find(id);
+            if(it == mConnectionList.end()) {
+              std::printf("No connection found with id %d\n", id);
+              return;
+            }
+            mClient.send(it->second->get_hdl(), message, errorCode);
+            if (errorCode) {
+              std::printf("Error sending message: %s\n", errorCode.message().c_str());
+              return;
+            }
+            it->second->recordMessage(payload->get_payload());
+          }
+
       protected:
         websocketpp::client<websocketpp::config::asio_client> mClient;
-        std::shared_ptr<std::thread> mThread;
+        std::thread mThread;
         std::map<int, std::shared_ptr<Connection>> mConnectionList;
         int mNextId;
     }
