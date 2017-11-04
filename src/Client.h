@@ -74,6 +74,8 @@ namespace midnight {
 				});
 
 				/*
+				The library recommended using std::bind for binding function arguments, but this seems to cause errors.  Lambdas seem more flexible.
+
 				connection->set_open_handler(std::bind(
 					&Client::onOpen,
 					newConnection,

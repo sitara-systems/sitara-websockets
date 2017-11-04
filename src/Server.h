@@ -36,6 +36,25 @@ namespace midnight {
 				mServer.run();
 			};
 
+			void stop() {
+				std::error_code errorCode;
+				mServer.stop_listening(errorCode);
+				if (errorCode) {
+					std::printf("Failed to stop listening: %s\n", errorCode.message().c_str());
+					return;
+				}
+				for (std::map<int, std::shared_ptr<Connection>>::const_iterator it = mConnectionList.begin(); it != mConnectionList.end(); ++it) {
+					if (it->second->getStatus() != ConnectionStatus::OPEN) {
+						// Only close open connections
+						continue;
+					}
+					std::printf("Closing connection %d\n", it->second->getId());
+					std::error_code errorCode;
+				}
+
+				mServer.stop();
+			}
+
 			void send(int id, std::string message) {
 				std::error_code errorCode;
 				std::shared_ptr<Connection> connection = getConnection(id);
@@ -61,6 +80,23 @@ namespace midnight {
 				messagePtr->set_payload(message, length);
 				connection->recordMessage(messagePtr);
 			};
+
+			bool sendClose(int id) {
+				websocketpp::connection_hdl handle;
+				std::error_code errorCode;
+				std::shared_ptr<Connection> connection = getConnection(id);
+				if (connection == nullptr) {
+					return false;
+				}
+				handle = connection->getHandle();
+				std::string data = "Terminating connection...";
+				mServer.close(handle, websocketpp::close::status::normal, data, errorCode);
+				if (errorCode) {
+					return false;
+				}
+				mConnectionList.erase(id);
+				return true;
+			}
 
 		protected:
 			void init() {
@@ -138,6 +174,8 @@ namespace midnight {
 			};
 
 			static void onFail(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle) {
+				websocketpp::server<websocketpp::config::asio>::connection_ptr connection = wsServer->get_con_from_hdl(handle);
+				websocketpp::lib::error_code errorCode = connection->get_ec();
 			};
 
 			static void onClose(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle) {
@@ -150,6 +188,9 @@ namespace midnight {
 
 			static void onSocketInit(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle, asio::ip::tcp::socket& socket) {
 				int newId = server->mNextId++;
+				websocketpp::server<websocketpp::config::asio>::connection_ptr connection = wsServer->get_con_from_hdl(handle);
+				// not sure get_query() is actually right; should be able to pull the URI from the uri_ptr object somehow.
+				//std::shared_ptr<Connection> newConnection(new Connection(newId, handle, connection->get_uri()->get_query()));
 				std::shared_ptr<Connection> newConnection(new Connection(newId, handle, ""));
 				server->mConnectionList[newId] = newConnection;
 			};
