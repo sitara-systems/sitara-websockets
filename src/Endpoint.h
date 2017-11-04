@@ -8,29 +8,30 @@
 #include "Connection.h"
 
 namespace midnight {
-  namespace websocket {
-    class Endpoint {
-      public:
-        Endpoint() {
-        };
+	namespace websocket {
+		class Endpoint {
+		public:
+			Endpoint() {
+				mNextId = 0;
+			};
 
-        ~Endpoint() {
-        };
+			~Endpoint() {
+			};
 
-		std::shared_ptr<Connection> getConnection(int id) {
-			std::map<int, std::shared_ptr<Connection>>::iterator connection = mConnectionList.find(id);
-			if (connection == mConnectionList.end()) {
-				std::printf("No Connection Found with id %d\n", id);
-				return nullptr;
+			std::shared_ptr<Connection> getConnection(int id) {
+				std::map<int, std::shared_ptr<Connection>>::iterator connection = mConnectionList.find(id);
+				if (connection == mConnectionList.end()) {
+					std::printf("No Connection Found with id %d\n", id);
+					return nullptr;
+				}
+				else {
+					return connection->second;
+				}
 			}
-			else {
-				return connection->second;
-			}
-		}
 
-      protected:
-		  int mNextId;
-        std::map<int, std::shared_ptr<Connection>> mConnectionList;
-	};
-  }
+		protected:
+			int mNextId;
+			std::map<int, std::shared_ptr<Connection>> mConnectionList;
+		};
+	}
 }

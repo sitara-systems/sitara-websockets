@@ -196,6 +196,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\Client.h" />
     <ClInclude Include="..\..\src\Connection.h" />
+    <ClInclude Include="..\..\src\Endpoint.h" />
     <ClInclude Include="..\..\src\Server.h" />
     <ClInclude Include="..\..\src\WebSockets.h" />
     <ClInclude Include="..\include\Resources.h" />

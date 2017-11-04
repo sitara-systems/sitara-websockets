@@ -21,9 +21,6 @@ class exampleServerApp : public App {
 
 void exampleServerApp::setup() {
 	mServer = std::make_shared<midnight::websocket::Server>(9002);
-	//mServer->addOnReceiveFn([](std::string message) {
-	//	std::printf("received message %s", message.c_str());
-	//});
 	mServer->run();
 }
 

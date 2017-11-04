@@ -14,7 +14,6 @@ namespace midnight {
 		class Client : public Endpoint {
 		public:
 			Client() : Endpoint() {
-				mNextId = 0;
 				mClient.clear_access_channels(websocketpp::log::alevel::all);
 				mClient.clear_error_channels(websocketpp::log::elevel::all);
 				mClient.init_asio();
@@ -58,6 +57,23 @@ namespace midnight {
 				std::shared_ptr<Connection> newConnection(new Connection(newId, connection->get_handle(), uri));
 				mConnectionList[newId] = newConnection;
 
+				connection->set_open_handler([&](websocketpp::connection_hdl handle) {
+					onOpen(newConnection, &mClient, handle);
+				});
+
+				connection->set_fail_handler([&](websocketpp::connection_hdl handle) {
+					onFail(newConnection, &mClient, handle);
+				});
+
+				connection->set_close_handler([&](websocketpp::connection_hdl handle) {
+					onClose(newConnection, &mClient, handle);
+				});
+
+				connection->set_message_handler([&](websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
+					onReceive(newConnection, &mClient, handle, message);
+				});
+
+				/*
 				connection->set_open_handler(std::bind(
 					&Client::onOpen,
 					newConnection,
@@ -82,10 +98,10 @@ namespace midnight {
 				connection->set_message_handler(std::bind(
 					&Client::onReceive,
 					newConnection,
-					&mClient,
 					std::placeholders::_1,
 					std::placeholders::_2
 				));
+				*/
 
 				mClient.connect(connection);
 				return newId;
@@ -159,6 +175,7 @@ namespace midnight {
 
 			static void onOpen(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
 				connection->setStatus(ConnectionStatus::OPEN);
+				std::printf("Client Connected!\n");
 				websocketpp::client<websocketpp::config::asio_client>::connection_ptr clientConnection = client->get_con_from_hdl(handle);
 				connection->setServer(clientConnection->get_response_header("Server"));
 			};
@@ -182,7 +199,7 @@ namespace midnight {
 				connection->setError(s.str());
 			};
 
-			static void onReceive(std::shared_ptr<Connection> connection, websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
+			static void onReceive(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
 				connection->callOnReceiveFns(message);
 				connection->recordMessage(message);
 			};
