@@ -1,13 +1,13 @@
 #pragma once
 
-#include <websocketpp/config/asio_no_tls_client.hpp>
+#include <websocketpp/config/asio_client.hpp>
 #include <functional>
 #include <memory>
 #include <thread>
 #include <system_error>
 #include "Connection.h"
 
-namespace midnight {
+namespace sitara {
 	namespace websocket {
 		class Endpoint {
 		public:

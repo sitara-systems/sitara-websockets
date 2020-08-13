@@ -1,10 +1,10 @@
 #pragma once
 
-#include <websocketpp/config/asio_no_tls_client.hpp>
-#include<websocketpp/client.hpp>
+#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/client.hpp>
 #include <websocketpp/common/connection_hdl.hpp>
 
-namespace midnight {
+namespace sitara {
 	namespace websocket {
 		enum ConnectionStatus {
 			CONNECTING,

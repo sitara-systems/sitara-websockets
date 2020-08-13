@@ -1,6 +1,6 @@
 #pragma once
 
-#include <websocketpp/config/asio_no_tls_client.hpp>
+#include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/client.hpp>
 #include <functional>
 #include <memory>
@@ -9,7 +9,7 @@
 #include "Connection.h"
 #include "Endpoint.h"
 
-namespace midnight {
+namespace sitara {
 	namespace websocket {
 		class Client : public Endpoint {
 		public:

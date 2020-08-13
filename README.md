@@ -1,15 +1,18 @@
-# midnight-websocketpp
+# sitara-websocketpp
 
-A basic websocket library that can handle multiple connections to/from each Client or Server.  Architecture 
-derived from the official documentations [utility](https://github.com/zaphoyd/websocketpp/tree/master/tutorials/utility_client)
+A basic websocket library that can handle multiple connections to/from each Client or Server.  Architecture derived from the official documentations [utility](https://github.com/zaphoyd/websocketpp/tree/master/tutorials/utility_client)
 [classes](https://github.com/zaphoyd/websocketpp/tree/master/tutorials/utility_server).
 
 ## Requirements
-* C++11
+* websocketpp
+* openssl
+* asio
 
-### Windows
+All requirements are added as submodules to the project.  To download them, run:
 
-### OSX
+```
+git submodule update --init --recursive
+```
 
 ## Usage
 
