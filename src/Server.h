@@ -1,6 +1,6 @@
 #pragma once
 
-#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <functional>
 #include <memory>
@@ -64,8 +64,8 @@ namespace sitara {
 					std::printf("Error sending message: %s\n", errorCode.message().c_str());
 					return;
 				}
-				messagePtr->set_payload(message);
-				connection->recordMessage(messagePtr);
+				//messagePtr->set_payload(message);
+				//connection->recordMessage(messagePtr);
 			};
 
 			void send(int id, void const * message, size_t length) {
@@ -77,8 +77,8 @@ namespace sitara {
 					std::printf("Error sending message: %s\n", errorCode.message().c_str());
 					return;
 				}
-				messagePtr->set_payload(message, length);
-				connection->recordMessage(messagePtr);
+				//messagePtr->set_payload(message, length);
+				//connection->recordMessage(messagePtr);
 			};
 
 			bool sendClose(int id) {
@@ -103,29 +103,6 @@ namespace sitara {
 				mServer.set_error_channels(websocketpp::log::elevel::all);
 				mServer.set_access_channels(websocketpp::log::alevel::all ^ websocketpp::log::alevel::frame_payload);
 				mServer.init_asio();
-
-				mServer.set_open_handler([&](websocketpp::connection_hdl handle) {
-					onOpen(this, &mServer, handle);
-				});
-
-				mServer.set_fail_handler([&](websocketpp::connection_hdl handle) {
-					onFail(this, &mServer, handle);
-				});
-
-				mServer.set_close_handler([&](websocketpp::connection_hdl handle) {
-					onClose(this, &mServer, handle);
-				});
-
-				mServer.set_message_handler([&](websocketpp::connection_hdl handle, websocketpp::server<websocketpp::config::asio>::message_ptr message) {
-					onReceive(this, &mServer, handle, message);
-				});
-
-				mServer.set_socket_init_handler([&](websocketpp::connection_hdl handle, asio::ip::tcp::socket& socket) {
-					onSocketInit(this, &mServer, handle, socket);
-				});
-
-				/*
-				The library recommended using std::bind for binding function arguments, but this seems to cause errors.  Lambdas seem more flexible.
 
 				mServer.set_open_handler(std::bind(
 					&Server::onOpen,
@@ -163,7 +140,6 @@ namespace sitara {
 					std::placeholders::_1,
 					std::placeholders::_2
 				));
-				*/
 			};
 
 			// these handlers should probably use a std::shared_ptr<Server>, but a regular pointer will do for now...

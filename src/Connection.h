@@ -1,6 +1,6 @@
 #pragma once
 
-#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/connection_hdl.hpp>
 
@@ -75,8 +75,8 @@ namespace sitara {
 				return mErrorReason;
 			}
 
-			void statusUpdate() {
-				std::printf("URI: %s\n Status: %s\n Remote Server: %s\n Error/Close Reason: %s\n Messages Processed: %d\n",
+			void printStatus() {
+				std::printf(" URI: %s\n Status: %s\n Remote Server: %s\n Error/Close Reason: %s\n Messages Processed: %d\n",
 					mUri.c_str(), getStatusString(mStatus).c_str(), mServer.c_str(), mErrorReason.c_str(), mMessages.size());
 			};
 

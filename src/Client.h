@@ -1,6 +1,6 @@
 #pragma once
 
-#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 #include <functional>
 #include <memory>
@@ -53,28 +53,9 @@ namespace sitara {
 					return -1;
 				}
 
-				int newId = mNextId++;
-				std::shared_ptr<Connection> newConnection(new Connection(newId, connection->get_handle(), uri));
-				mConnectionList[newId] = newConnection;
-
-				connection->set_open_handler([&](websocketpp::connection_hdl handle) {
-					onOpen(newConnection, &mClient, handle);
-				});
-
-				connection->set_fail_handler([&](websocketpp::connection_hdl handle) {
-					onFail(newConnection, &mClient, handle);
-				});
-
-				connection->set_close_handler([&](websocketpp::connection_hdl handle) {
-					onClose(newConnection, &mClient, handle);
-				});
-
-				connection->set_message_handler([&](websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
-					onReceive(newConnection, &mClient, handle, message);
-				});
-
-				/*
-				The library recommended using std::bind for binding function arguments, but this seems to cause errors.  Lambdas seem more flexible.
+				mNextId++;
+				std::shared_ptr<Connection> newConnection(new Connection(mNextId, connection->get_handle(), uri));
+				mConnectionList.insert(std::make_pair(mNextId, newConnection));
 
 				connection->set_open_handler(std::bind(
 					&Client::onOpen,
@@ -100,13 +81,13 @@ namespace sitara {
 				connection->set_message_handler(std::bind(
 					&Client::onReceive,
 					newConnection,
+					&mClient,
 					std::placeholders::_1,
 					std::placeholders::_2
 				));
-				*/
 
 				mClient.connect(connection);
-				return newId;
+				return mNextId;
 			};
 
 			void close(int id) {
@@ -132,7 +113,7 @@ namespace sitara {
 				}
 			}
 
-			void send(int id, std::string message) {
+			void send(int id, const std::string& message) {
 				std::error_code errorCode;
 				std::shared_ptr<Connection> connection = getConnection(id);
 				websocketpp::client<websocketpp::config::asio_client>::message_ptr messagePtr;
@@ -142,8 +123,8 @@ namespace sitara {
 						std::printf("Error sending message: %s\n", errorCode.message().c_str());
 						return;
 					}
-					messagePtr->set_payload(message);
-					connection->recordMessage(messagePtr);
+					//messagePtr->set_payload(message);
+					//connection->recordMessage(messagePtr);
 				}
 			};
 
@@ -158,8 +139,8 @@ namespace sitara {
 						return;
 					}
 				}
-				messagePtr->set_payload(payload, length);
-				connection->recordMessage(messagePtr);
+				//messagePtr->set_payload(payload, length);
+				//connection->recordMessage(messagePtr);
 			}
 
 			void send(int id, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
@@ -177,9 +158,10 @@ namespace sitara {
 
 			static void onOpen(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
 				connection->setStatus(ConnectionStatus::OPEN);
-				std::printf("Client Connected!\n");
 				websocketpp::client<websocketpp::config::asio_client>::connection_ptr clientConnection = client->get_con_from_hdl(handle);
 				connection->setServer(clientConnection->get_response_header("Server"));
+				std::printf("Client Connected!\n");
+				connection->printStatus();
 			};
 
 			static void onFail(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
@@ -209,7 +191,6 @@ namespace sitara {
 		protected:
 			websocketpp::client<websocketpp::config::asio_client> mClient;
 			std::thread mThread;
-			std::map<int, std::shared_ptr<Connection>> mConnectionList;
 		};
 	}
 }

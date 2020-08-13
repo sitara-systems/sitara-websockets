@@ -1,6 +1,6 @@
 #pragma once
 
-#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/config/asio_no_tls_client.hpp>
 #include <functional>
 #include <memory>
 #include <thread>
@@ -12,7 +12,6 @@ namespace sitara {
 		class Endpoint {
 		public:
 			Endpoint() {
-				mNextId = 0;
 			};
 
 			~Endpoint() {
@@ -30,7 +29,7 @@ namespace sitara {
 			}
 
 		protected:
-			int mNextId;
+			int mNextId = 0;
 			std::map<int, std::shared_ptr<Connection>> mConnectionList;
 		};
 	}
