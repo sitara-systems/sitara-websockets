@@ -17,11 +17,13 @@ git submodule update --init --recursive
 Note about ALWAYS checking connections for being valid
 
 ## Examples
-* `exampleServer` is a basic server.
-* `exampleClient` is a basic client.
+* `exampleWebsocketServerApp` is a basic server.
+* `exampleWebsocketClientApp` is a basic client.
 
 ## To Do
 Currently, sitara-websocketpp does NOT support TLS/SSL.
+
+The example Websocket Server doesn't function.
 
 ## Contributing
 This project uses the [Git Flow](http://nvie.com/posts/a-successful-git-branching-model/) paradigm.  Before contributing, please make your own feature branch with your changes.
