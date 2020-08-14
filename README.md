@@ -17,8 +17,9 @@ git submodule update --init --recursive
 sitara-websockets uses property sheets to easily swap visual studio configuration settings to another project.  Adjust the macros in the property sheets to match your specific project's layout.
 
 ## Examples
-* `exampleWebsocketServerApp` is a basic server.
-* `exampleWebsocketClientApp` is a basic client.
+* `exampleWebsocketServer` is a basic server that just prints any received messages to the console.
+* `exampleWebsocketClient` is a basic client that periodically sends messages.
+* `exampleWebsocketEchoServer` is a server that will print received messages to console and also echos the received message back to the sender.
 
 ## To Do
 Currently, sitara-websockets does NOT support TLS/SSL.
