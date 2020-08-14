@@ -23,7 +23,8 @@ void exampleWebsocketClientApp::setup() {
 	ci::app::setFrameRate(1);
 	// Create a client endpoint
 	mClient = std::make_shared<sitara::websocket::Client>();
-	std::string uri = "ws://echo.websocket.org/";
+	//std::string uri = "ws://echo.websocket.org/";
+	std::string uri = "ws://localhost:9002/";
 	mConnectionId = mClient->connect(uri);
 	std::shared_ptr<sitara::websocket::Connection> connection = mClient->getConnection(mConnectionId);
 

@@ -100,8 +100,9 @@ namespace sitara {
 
 		protected:
 			void init() {
+ 				mServer.set_access_channels(websocketpp::log::alevel::all ^ websocketpp::log::alevel::frame_payload);
+				mServer.clear_access_channels(websocketpp::log::alevel::frame_payload);
 				mServer.set_error_channels(websocketpp::log::elevel::all);
-				mServer.set_access_channels(websocketpp::log::alevel::all ^ websocketpp::log::alevel::frame_payload);
 				mServer.init_asio();
 
 				mServer.set_open_handler(std::bind(
@@ -159,7 +160,7 @@ namespace sitara {
 			};
 
 			static void onReceive(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle, websocketpp::server<websocketpp::config::asio>::message_ptr message) {
-				std::printf("received message %s", message->get_payload().c_str());
+				std::printf("Received message %s\n", message->get_payload().c_str());
 			};
 
 			static void onSocketInit(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle, asio::ip::tcp::socket& socket) {

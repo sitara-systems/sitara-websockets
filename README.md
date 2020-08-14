@@ -23,8 +23,6 @@ sitara-websockets uses property sheets to easily swap visual studio configuratio
 ## To Do
 Currently, sitara-websockets does NOT support TLS/SSL.
 
-The example Websocket Server doesn't function.
-
 ## Contributing
 This project uses the [Git Flow](http://nvie.com/posts/a-successful-git-branching-model/) paradigm.  Before contributing, please make your own feature branch with your changes.
 
