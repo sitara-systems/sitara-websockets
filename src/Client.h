@@ -45,6 +45,13 @@ namespace sitara {
 				}
 			};
 
+			std::shared_ptr<Connection> createConnection(int id, websocketpp::client<websocketpp::config::asio_client>::connection_ptr connection) {
+				std::shared_ptr<Connection> newConnection(new Connection(mNextId, connection->get_handle(), connection->get_uri()->str()));
+				mConnectionList.insert(std::make_pair(mNextId, newConnection));
+				mHandleMap.insert(std::make_pair(connection->get_handle(), newConnection));
+				return newConnection;
+			}
+
 			int connect(std::string& uri) {
 				std::error_code errorCode;
 				websocketpp::client<websocketpp::config::asio_client>::connection_ptr connection = mClient.get_connection(uri, errorCode);
@@ -54,8 +61,7 @@ namespace sitara {
 				}
 
 				mNextId++;
-				std::shared_ptr<Connection> newConnection(new Connection(mNextId, connection->get_handle(), uri));
-				mConnectionList.insert(std::make_pair(mNextId, newConnection));
+				std::shared_ptr<Connection> newConnection = createConnection(mNextId, connection);
 
 				connection->set_open_handler(std::bind(
 					&Client::onOpen,
@@ -159,15 +165,16 @@ namespace sitara {
 			static void onOpen(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
 				connection->setStatus(ConnectionStatus::OPEN);
 				websocketpp::client<websocketpp::config::asio_client>::connection_ptr clientConnection = client->get_con_from_hdl(handle);
-				connection->setServer(clientConnection->get_response_header("Server"));
+				connection->setEndpoint(clientConnection->get_response_header("Server"));
 				std::printf("Client Connected!\n");
 				connection->printStatus();
 			};
 
 			static void onFail(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
+				std::printf("Client failed to connect.\n");
 				connection->setStatus(ConnectionStatus::FAILED);
 				websocketpp::client<websocketpp::config::asio_client>::connection_ptr clientConnection = client->get_con_from_hdl(handle);
-				connection->setServer(clientConnection->get_response_header("Server"));
+				connection->setEndpoint(clientConnection->get_response_header("Server"));
 				connection->setError(clientConnection->get_ec().message());
 			};
 
@@ -184,7 +191,7 @@ namespace sitara {
 			};
 
 			static void onReceive(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
-				connection->callOnReceiveFns(message);
+				connection->callOnReceiveFns(handle, message);
 				connection->recordMessage(message);
 			};
 

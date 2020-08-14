@@ -20,7 +20,7 @@ namespace sitara {
 				mHandle = handle;
 				mStatus = ConnectionStatus::CONNECTING;
 				mUri = uri;
-				mServer = "N/A";
+				mEndpoint = "N/A";
 			};
 
 			~Connection() {
@@ -59,12 +59,12 @@ namespace sitara {
 				return mId;
 			}
 
-			void setServer(std::string server) {
-				mServer = server;
+			void setEndpoint(std::string endpoint) {
+				mEndpoint = endpoint;
 			}
 
-			std::string getServer() {
-				return mServer;
+			std::string getEndpoint() {
+				return mEndpoint;
 			}
 
 			void setError(std::string error) {
@@ -76,8 +76,8 @@ namespace sitara {
 			}
 
 			void printStatus() {
-				std::printf(" URI: %s\n Status: %s\n Remote Server: %s\n Error/Close Reason: %s\n Messages Processed: %d\n",
-					mUri.c_str(), getStatusString(mStatus).c_str(), mServer.c_str(), mErrorReason.c_str(), mMessages.size());
+				std::printf(" URI: %s\n Status: %s\n Remote Endpoint: %s\n Error/Close Reason: %s\n Messages Processed: %d\n",
+					mUri.c_str(), getStatusString(mStatus).c_str(), mEndpoint.c_str(), mErrorReason.c_str(), mMessages.size());
 			};
 
 			std::string getStatusString(ConnectionStatus status) {
@@ -95,13 +95,13 @@ namespace sitara {
 				}
 			}
 
-			void addOnReceiveFn(std::function<void(std::string message)> response) {
+			void addOnReceiveFn(std::function<void(websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message)> response) {
 				mOnReceiveFns.push_back(response);
 			};
 
-			void callOnReceiveFns(websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
+			void callOnReceiveFns(websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
 				for (auto callback : mOnReceiveFns) {
-					callback(message->get_payload());
+					callback(handle, message);
 				}
 			};
 
@@ -110,10 +110,10 @@ namespace sitara {
 			websocketpp::connection_hdl mHandle;
 			ConnectionStatus mStatus;
 			std::string mUri;
-			std::string mServer;
+			std::string mEndpoint;
 			std::string mErrorReason;
 			std::vector<std::string> mMessages;
-			std::vector<std::function<void(std::string message)> > mOnReceiveFns;
+			std::vector<std::function<void(websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message)> > mOnReceiveFns;
 
 		};
 	}

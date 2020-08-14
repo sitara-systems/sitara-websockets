@@ -55,6 +55,14 @@ namespace sitara {
 				mServer.stop();
 			}
 
+			std::shared_ptr<Connection> createConnection(websocketpp::server<websocketpp::config::asio>::connection_ptr connection) {
+				mNextId++;
+				std::shared_ptr<Connection> newConnection(new Connection(mNextId, connection->get_handle(), connection->get_uri()->str()));
+				mConnectionList.insert(std::make_pair(mNextId, newConnection));
+				mHandleMap.insert(std::make_pair(connection->get_handle(), newConnection));
+				return newConnection;
+			}
+
 			void send(int id, std::string message) {
 				std::error_code errorCode;
 				std::shared_ptr<Connection> connection = getConnection(id);
@@ -81,6 +89,19 @@ namespace sitara {
 				//connection->recordMessage(messagePtr);
 			};
 
+			void send(int id, websocketpp::server<websocketpp::config::asio>::message_ptr message) {
+				std::error_code errorCode;
+				std::shared_ptr<Connection> connection = getConnection(id);
+				if (connection != nullptr) {
+					mServer.send(connection->getHandle(), message, errorCode);
+					if (errorCode) {
+						std::printf("Error sending message: %s\n", errorCode.message().c_str());
+						return;
+					}
+					connection->recordMessage(message);
+				}
+			}
+
 			bool sendClose(int id) {
 				websocketpp::connection_hdl handle;
 				std::error_code errorCode;
@@ -97,6 +118,10 @@ namespace sitara {
 				mConnectionList.erase(id);
 				return true;
 			}
+
+			void addOnReceiveFn(std::function<void(websocketpp::connection_hdl handle, websocketpp::server<websocketpp::config::asio>::message_ptr message)> response) {
+				mOnReceiveFns.push_back(response);
+			};
 
 		protected:
 			void init() {
@@ -145,34 +170,52 @@ namespace sitara {
 
 			// these handlers should probably use a std::shared_ptr<Server>, but a regular pointer will do for now...
 			static void onOpen(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle) {
-				std::printf("Server opened!\n");
-				int newId = server->mNextId++;
-				std::shared_ptr<Connection> newConnection(new Connection(newId, handle, ""));
+				std::printf("Server Connected!\n");
+				websocketpp::server<websocketpp::config::asio>::connection_ptr wsConnection = wsServer->get_con_from_hdl(handle);
+
+				std::shared_ptr<Connection> newConnection = server->createConnection(wsConnection);
+				newConnection->setStatus(ConnectionStatus::OPEN);
+				newConnection->printStatus();
 			};
 
 			static void onFail(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle) {
-				websocketpp::server<websocketpp::config::asio>::connection_ptr connection = wsServer->get_con_from_hdl(handle);
-				websocketpp::lib::error_code errorCode = connection->get_ec();
+				std::printf("Server failed to connect.\n");
+				std::shared_ptr<Connection> connection = server->getConnection(handle);
+				connection->setStatus(ConnectionStatus::FAILED);
+
+				websocketpp::server<websocketpp::config::asio>::connection_ptr wsConnection = wsServer->get_con_from_hdl(handle);
+				connection->setEndpoint(wsConnection->get_response_header("Server"));
+				connection->setError(wsConnection->get_ec().message());
 			};
 
 			static void onClose(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle) {
-				std::printf("Server closed.\n");
+				std::shared_ptr<Connection> connection = server->getConnection(handle);
+				connection->setStatus(ConnectionStatus::CLOSED);
+				websocketpp::server<websocketpp::config::asio>::connection_ptr wsConnection = wsServer->get_con_from_hdl(handle);
+				// sprintf would be sloppy here, so I'm using stringstreams
+				// I'm not typically a fan of stringstreams :(
+				std::stringstream s;
+				s << "Close Code: " << wsConnection->get_remote_close_code() << " ("
+					<< websocketpp::close::status::get_string(wsConnection->get_remote_close_code())
+					<< "), Close Reason: " << wsConnection->get_remote_close_reason();
+				connection->setError(s.str());
 			};
 
 			static void onReceive(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle, websocketpp::server<websocketpp::config::asio>::message_ptr message) {
-				std::printf("Received message %s\n", message->get_payload().c_str());
+				std::shared_ptr<Connection> connection = server->getConnection(handle);
+				for (auto callback : server->mOnReceiveFns) {
+					callback(handle, message);
+				}
+				//connection->callOnReceiveFns(handle, message);
+				//connection->recordMessage(message);
 			};
 
 			static void onSocketInit(Server* server, websocketpp::server<websocketpp::config::asio>* wsServer, websocketpp::connection_hdl handle, asio::ip::tcp::socket& socket) {
-				int newId = server->mNextId++;
-				websocketpp::server<websocketpp::config::asio>::connection_ptr connection = wsServer->get_con_from_hdl(handle);
-				// not sure get_query() is actually right; should be able to pull the URI from the uri_ptr object somehow.
-				//std::shared_ptr<Connection> newConnection(new Connection(newId, handle, connection->get_uri()->get_query()));
-				std::shared_ptr<Connection> newConnection(new Connection(newId, handle, ""));
-				server->mConnectionList[newId] = newConnection;
+				std::shared_ptr<Connection> connection = server->getConnection(handle);
 			};
 
 			websocketpp::server<websocketpp::config::asio> mServer;
+			std::vector<std::function<void(websocketpp::connection_hdl handle, websocketpp::server<websocketpp::config::asio>::message_ptr message)> > mOnReceiveFns;
 			int mPort;
 		};
 	};

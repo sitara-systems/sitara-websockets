@@ -28,11 +28,12 @@ void exampleWebsocketClientApp::setup() {
 	mConnectionId = mClient->connect(uri);
 	std::shared_ptr<sitara::websocket::Connection> connection = mClient->getConnection(mConnectionId);
 
-	connection->addOnReceiveFn([&, connection](std::string msg) {
+	connection->addOnReceiveFn([&](websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
 		std::printf("Received message!\n");
 		std::printf("Connection Status:\n");
-		connection->printStatus();
-		std::printf("Message : %s\n\n", msg.c_str());
+		auto c = mClient->getConnection(handle);
+		c->printStatus();
+		std::printf("Message : %s\n\n", message->get_payload().c_str());
 		});
 }
 
@@ -40,7 +41,7 @@ void exampleWebsocketClientApp::mouseDown( MouseEvent event ) {
 }
 
 void exampleWebsocketClientApp::update() {
-	if (int(ci::app::getElapsedSeconds()) % 5 == 0) {
+	if (int(ci::app::getElapsedSeconds()) % 2 == 0) {
 		std::shared_ptr<sitara::websocket::Connection> connection = mClient->getConnection(mConnectionId);
 		if (connection) {
 			std::printf("Sending message...\n");
