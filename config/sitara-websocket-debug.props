@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <BLOCK_ROOT>..\..\..\..\dependencies\sitara-websockets</BLOCK_ROOT>
+    <WEBSOCKETPP_ROOT>$(BLOCK_ROOT)\libs\websocketpp</WEBSOCKETPP_ROOT>
+    <CINDER_ROOT>..\..\..\..\dependencies\cinder</CINDER_ROOT>
+    <ASIO_ROOT>$(BLOCK_ROOT)\libs\asio</ASIO_ROOT>
+    <OPENSSL_ROOT>$(BLOCK_ROOT)\libs\openssl</OPENSSL_ROOT>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(BLOCK_ROOT)\src;$(WEBSOCKETPP_ROOT);$(CINDER_ROOT)\include;$(CINDER_ROOT)\include\asio;$(ASIO_ROOT)\asio\include;$(ASIO_ROOT)\asio\include\asio;$(OPENSSL_ROOT);$(OPENSSL_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WEBSOCKETPP_CPP11_RANDOM_DEVICE_;_WEBSOCKETPP_CPP11_TYPE_TRAITS_;ASIO_STANDALONE;_WEBSOCKETPP_CPP11_FUNCTIONAL_;ASIO_HAS_STD_ARRAY;ASIO_HAS_STD_ATOMIC;ASIO_HAS_STD_TYPE_TRAITS;ASIO_HAS_CSTDINT;ASIO_HAS_STD_ADDRESSOF;ASIO_HAS_STD_SHARED_PTR;WIN32_LEAN_AND_MEAN;_WIN32_WINNT=0x0A00;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="BLOCK_ROOT">
+      <Value>$(BLOCK_ROOT)</Value>
+    </BuildMacro>
+    <BuildMacro Include="WEBSOCKETPP_ROOT">
+      <Value>$(WEBSOCKETPP_ROOT)</Value>
+    </BuildMacro>
+    <BuildMacro Include="CINDER_ROOT">
+      <Value>$(CINDER_ROOT)</Value>
+    </BuildMacro>
+    <BuildMacro Include="ASIO_ROOT">
+      <Value>$(ASIO_ROOT)</Value>
+    </BuildMacro>
+    <BuildMacro Include="OPENSSL_ROOT">
+      <Value>$(OPENSSL_ROOT)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
