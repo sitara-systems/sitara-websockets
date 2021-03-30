@@ -4,3 +4,4 @@
 #include "Endpoint.h"
 #include "Client.h"
 #include "Server.h"
+#include "ddp/DDPClient.h"

@@ -52,7 +52,7 @@ namespace sitara {
 				return newConnection;
 			}
 
-			int connect(std::string& uri) {
+			int connect(const std::string& uri) {
 				std::error_code errorCode;
 				websocketpp::client<websocketpp::config::asio_client>::connection_ptr connection = mClient.get_connection(uri, errorCode);
 				if (errorCode) {
@@ -168,6 +168,7 @@ namespace sitara {
 				connection->setEndpoint(clientConnection->get_response_header("Server"));
 				std::printf("Client Connected!\n");
 				connection->printStatus();
+				connection->callOnOpenFn(connection, client, handle);
 			};
 
 			static void onFail(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
@@ -176,6 +177,7 @@ namespace sitara {
 				websocketpp::client<websocketpp::config::asio_client>::connection_ptr clientConnection = client->get_con_from_hdl(handle);
 				connection->setEndpoint(clientConnection->get_response_header("Server"));
 				connection->setError(clientConnection->get_ec().message());
+				connection->callOnFailFn(connection, client, handle);
 			};
 
 			static void onClose(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle) {
@@ -188,10 +190,11 @@ namespace sitara {
 					<< websocketpp::close::status::get_string(clientConnection->get_remote_close_code())
 					<< "), Close Reason: " << clientConnection->get_remote_close_reason();
 				connection->setError(s.str());
+				connection->callOnCloseFn(connection, client, handle);
 			};
 
 			static void onReceive(std::shared_ptr<Connection> connection, websocketpp::client<websocketpp::config::asio_client>* client, websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
-				connection->callOnReceiveFns(handle, message);
+				connection->callOnReceiveFn(handle, message);
 				connection->recordMessage(message);
 			};
 

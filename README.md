@@ -20,9 +20,13 @@ sitara-websockets uses property sheets to easily swap visual studio configuratio
 * `exampleWebsocketServer` is a basic server that just prints any received messages to the console.
 * `exampleWebsocketClient` is a basic client that periodically sends messages.
 * `exampleWebsocketEchoServer` is a server that will print received messages to console and also echos the received message back to the sender.
+* `exampleDDPClient` shows an simple DDP Client, using Meteor's [DDP Protocol](https://github.com/meteor/meteor/blob/devel/packages/ddp/DDP.md).
 
 ## To Do
 Currently, sitara-websockets does NOT support TLS/SSL.
+
+### DDP Protocol
+`sitara-websocket` has a client implementation of Meteor's [DDP Protocol](https://github.com/meteor/meteor/blob/devel/packages/ddp/DDP.md).  The implementation is incomplete but supports most common behaviors.  It does *not* come with a minimongo implementation; it is really only designed to subscribed to updates or changes to documents in a Meteor database.
 
 ## Contributing
 This project uses the [Git Flow](http://nvie.com/posts/a-successful-git-branching-model/) paradigm.  Before contributing, please make your own feature branch with your changes.

@@ -23,18 +23,18 @@ void exampleWebsocketClientApp::setup() {
 	ci::app::setFrameRate(1);
 	// Create a client endpoint
 	mClient = std::make_shared<sitara::websocket::Client>();
+	//std::string uri = "ws://localhost:3000/websocket";
 	std::string uri = "ws://echo.websocket.org/";
-	//std::string uri = "ws://localhost:9002/";
 	mConnectionId = mClient->connect(uri);
 	std::shared_ptr<sitara::websocket::Connection> connection = mClient->getConnection(mConnectionId);
 
-	connection->addOnReceiveFn([&](websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
+	connection->setOnReceiveFn([&](websocketpp::connection_hdl handle, websocketpp::client<websocketpp::config::asio_client>::message_ptr message) {
 		std::printf("Received message!\n");
 		std::printf("Connection Status:\n");
 		auto c = mClient->getConnection(handle);
 		c->printStatus();
 		std::printf("Message : %s\n\n", message->get_payload().c_str());
-		});
+	});
 }
 
 void exampleWebsocketClientApp::mouseDown( MouseEvent event ) {
@@ -43,7 +43,7 @@ void exampleWebsocketClientApp::mouseDown( MouseEvent event ) {
 void exampleWebsocketClientApp::update() {
 	if (int(ci::app::getElapsedSeconds()) % 2 == 0) {
 		std::shared_ptr<sitara::websocket::Connection> connection = mClient->getConnection(mConnectionId);
-		if (connection) {
+		if (connection->getStatus() == sitara::websocket::OPEN) {
 			std::printf("Sending message...\n");
 			std::string msg = "Hello World " + std::to_string(ci::app::getElapsedSeconds());
 			mClient->send(mConnectionId, msg);
