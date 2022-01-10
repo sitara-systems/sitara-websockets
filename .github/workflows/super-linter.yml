@@ -1,0 +1,92 @@
+# This workflow executes several linters on changed files based on languages used in your code base whenever
+# you push a code or open a pull request.
+#
+# You can adjust the behavior by modifying this file.
+# For more information, see:
+# https://github.com/github/super-linter
+name: Format and Lint Code
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+jobs:
+  format-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Apply Prettier
+        uses: creyD/prettier_action@v4.1.1
+      - name: Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_user_name: Github Actions
+          commit_user_email: actions@github.com
+          commit_message: Apply prettier styling to web files
+
+  format-python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: iSort files
+        uses: isort/isort-action@master
+        with:
+          configuration: "--profile black"
+      - name: Apply Black style
+        uses: psf/black@stable
+        with:
+          options: "--verbose"
+      - name: Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_user_name: Github Actions
+          commit_user_email: actions@github.com
+          commit_message: Apply isort and black python style
+
+  format-cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Format code with clang-format
+        uses: DoozyX/clang-format-lint-action@v0.13
+        with:
+          source: .
+          clangFormatVersion: 13
+          inplace: True
+          style: file
+
+      - name: Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_user_name: Github Actions
+          commit_user_email: actions@github.com
+          commit_message: Apply clang-format
+
+  run-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+
+      - name: Lint Code Base
+        uses: github/super-linter/slim@v4
+        env:
+          PYTHON_ISORT_CONFIG_FILE: pyproject.toml
+          PYTHON_FLAKE8_CONFIG_FILE: .flake8
+          JAVASCRIPT_DEFAULT_STYLE: prettier
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_PYTHON_MYPY: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

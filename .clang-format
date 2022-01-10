@@ -1,0 +1,5 @@
+---
+# based off of Chromium style
+BasedOnStyle: Chromium
+IndentWidth: 4
+IncludeBlocks: Regroup
