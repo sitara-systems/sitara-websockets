@@ -8,47 +8,47 @@ name: Format and Lint Code
 
 on:
   push:
-    branches: [main, development]
+    branches: [master, development]
   pull_request:
-    branches: [main, development]
+    branches: [master, development]
 jobs:
-  format-web:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Apply Prettier
-        uses: creyD/prettier_action@v4.1.1
-      - name: Commit Changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_user_name: Github Actions
-          commit_user_email: actions@github.com
-          commit_message: Apply prettier styling to web files
-
-  format-python:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: iSort files
-        uses: isort/isort-action@master
-        with:
-          configuration: "--profile black"
-      - name: Apply Black style
-        uses: psf/black@stable
-        with:
-          options: "--verbose"
-      - name: Commit Changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_user_name: Github Actions
-          commit_user_email: actions@github.com
-          commit_message: Apply isort and black python style
+  # format-web:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+  #     - name: Apply Prettier
+  #       uses: creyD/prettier_action@v4.1.1
+  #     - name: Commit Changes
+  #       uses: stefanzweifel/git-auto-commit-action@v4
+  #       with:
+  #         commit_user_name: Github Actions
+  #         commit_user_email: actions@github.com
+  #         commit_message: Apply prettier styling to web files
+  #
+  # format-python:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+  #     - name: Setup python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.8
+  #     - name: iSort files
+  #       uses: isort/isort-action@master
+  #       with:
+  #         configuration: "--profile black"
+  #     - name: Apply Black style
+  #       uses: psf/black@stable
+  #       with:
+  #         options: "--verbose"
+  #     - name: Commit Changes
+  #       uses: stefanzweifel/git-auto-commit-action@v4
+  #       with:
+  #         commit_user_name: Github Actions
+  #         commit_user_email: actions@github.com
+  #         commit_message: Apply isort and black python style
 
   format-cpp:
     runs-on: ubuntu-latest
