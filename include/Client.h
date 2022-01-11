@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -121,20 +121,9 @@ class Client : public Endpoint {
         return mNextId;
     }
 
-    void close(int id) {
-        int close_code = websocketpp::close::status::normal;
-        std::error_code errorCode;
-        std::shared_ptr<Connection> connection = getConnection(id);
-        if (connection != nullptr) {
-            mClient.close(connection->getHandle(), close_code, "", errorCode);
-            if (errorCode) {
-                std::printf("Error initiating close: %s\n",
-                            errorCode.message().c_str());
-            }
-        }
-    }
-
-    void close(int id, websocketpp::close::status::value close_code) {
+    void close(int id,
+               websocketpp::close::status::value close_code =
+                   websocketpp::close::status::normal) {
         std::error_code errorCode;
         std::shared_ptr<Connection> connection = getConnection(id);
         if (connection != nullptr) {
