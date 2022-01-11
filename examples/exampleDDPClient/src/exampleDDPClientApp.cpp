@@ -3,17 +3,13 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 
-using namespace ci;
-using namespace ci::app;
-using namespace std;
-
-class exampleDDPClientApp : public App {
+class exampleDDPClientApp : public ci::app::App {
    public:
     void setup() override;
     void update() override;
     void draw() override;
 
-    gl::Texture2dRef mSitaraSystemsLogo;
+    ci::gl::Texture2dRef mSitaraSystemsLogo;
     ci::vec2 mLogoPosition;
     bool mAppReady;
     std::shared_ptr<sitara::websocket::DDPClient> mClient;
@@ -59,18 +55,18 @@ void exampleDDPClientApp::update() {
 
 void exampleDDPClientApp::draw() {
     if (!mAppReady) {
-        gl::clear(Color(0, 0, 0));
-        gl::pushMatrices();
-        gl::translate(mLogoPosition);
-        gl::draw(mSitaraSystemsLogo);
-        gl::popMatrices();
+        ci::gl::clear(Color(0, 0, 0));
+        ci::gl::pushMatrices();
+        ci::gl::translate(mLogoPosition);
+        ci::gl::draw(mSitaraSystemsLogo);
+        ci::gl::popMatrices();
     } else {
         // app goes here!
     }
 }
 
 CINDER_APP(exampleDDPClientApp,
-           RendererGl,
+           ci::app::RendererGl,
            [=](cinder::app::App::Settings* settings) {
                settings->setTitle("Sitara Systems Template Application");
                settings->setWindowSize(1920, 1080);

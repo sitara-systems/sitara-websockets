@@ -1,9 +1,12 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
+#include <string>
 #include <system_error>
 #include <thread>
+#include <utility>
 #include <websocketpp/client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 
@@ -22,7 +25,7 @@ class Client : public Endpoint {
         mThread = std::thread(
             &websocketpp::client<websocketpp::config::asio_client>::run,
             &mClient);
-    };
+    }
 
     ~Client() {
         mClient.stop_perpetual();
@@ -51,7 +54,7 @@ class Client : public Endpoint {
         if (mThread.joinable()) {
             mThread.join();
         }
-    };
+    }
 
     std::shared_ptr<Connection> createConnection(
         int id,
@@ -94,7 +97,7 @@ class Client : public Endpoint {
 
         mClient.connect(connection);
         return mNextId;
-    };
+    }
 
     void close(int id) {
         int close_code = websocketpp::close::status::normal;
@@ -107,7 +110,7 @@ class Client : public Endpoint {
                             errorCode.message().c_str());
             }
         }
-    };
+    }
 
     void close(int id, websocketpp::close::status::value close_code) {
         std::error_code errorCode;
@@ -137,7 +140,7 @@ class Client : public Endpoint {
             // messagePtr->set_payload(message);
             // connection->recordMessage(messagePtr);
         }
-    };
+    }
 
     void send(int id, void const* payload, size_t length) {
         std::error_code errorCode;
@@ -185,7 +188,7 @@ class Client : public Endpoint {
         std::printf("Client Connected!\n");
         connection->printStatus();
         connection->callOnOpenFn(connection, client, handle);
-    };
+    }
 
     static void onFail(
         std::shared_ptr<Connection> connection,
@@ -199,7 +202,7 @@ class Client : public Endpoint {
             clientConnection->get_response_header("Server"));
         connection->setError(clientConnection->get_ec().message());
         connection->callOnFailFn(connection, client, handle);
-    };
+    }
 
     static void onClose(
         std::shared_ptr<Connection> connection,
@@ -217,7 +220,7 @@ class Client : public Endpoint {
           << "), Close Reason: " << clientConnection->get_remote_close_reason();
         connection->setError(s.str());
         connection->callOnCloseFn(connection, client, handle);
-    };
+    }
 
     static void onReceive(
         std::shared_ptr<Connection> connection,
@@ -227,7 +230,7 @@ class Client : public Endpoint {
             message) {
         connection->callOnReceiveFn(handle, message);
         connection->recordMessage(message);
-    };
+    }
 
    protected:
     websocketpp::client<websocketpp::config::asio_client> mClient;

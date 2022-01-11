@@ -3,11 +3,7 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 
-using namespace ci;
-using namespace ci::app;
-using namespace std;
-
-class exampleWebsocketEchoServerApp : public App {
+class exampleWebsocketEchoServerApp : public ci::app::App {
    public:
     void setup() override;
     void mouseDown(MouseEvent event) override;
@@ -38,11 +34,11 @@ void exampleWebsocketEchoServerApp::mouseDown(MouseEvent event) {}
 void exampleWebsocketEchoServerApp::update() {}
 
 void exampleWebsocketEchoServerApp::draw() {
-    gl::clear(Color(0, 0, 0));
+    ci::gl::clear(Color(0, 0, 0));
 }
 
 CINDER_APP(exampleWebsocketEchoServerApp,
-           RendererGl,
+           ci::app::RendererGl,
            [=](cinder::app::App::Settings* settings) {
                settings->setConsoleWindowEnabled();
            })

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <system_error>
 #include <thread>
@@ -12,9 +13,9 @@ namespace sitara {
 namespace websocket {
 class Endpoint {
    public:
-    Endpoint() : mNextId(0){};
+    Endpoint() : mNextId(0){}
 
-    ~Endpoint(){};
+    ~Endpoint(){}
 
     void removeConnection(int id) {
         std::shared_ptr<Connection> connection = getConnection(id);

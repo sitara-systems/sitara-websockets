@@ -1,6 +1,7 @@
 #include "ddp/DDPClient.h"
 
-using namespace sitara::websocket;
+namespace sitara {
+namespace websocket {
 
 DDPClient::DDPClient() : Client() {
     mConnectionId = -1;
@@ -193,3 +194,5 @@ std::string DDPClient::generateId() {
 std::string DDPClient::toString(const Json::Value& json) {
     return mJsonWriter.write(json);
 }
+}  // namespace websocket
+}  // namespace sitara

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <map>
 #include <random>
+#include <string>
 
 #include "../Client.h"
 #include "jsoncpp/json.h"

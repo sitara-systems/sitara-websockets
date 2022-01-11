@@ -3,11 +3,7 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 
-using namespace ci;
-using namespace ci::app;
-using namespace std;
-
-class exampleWebsocketClientApp : public App {
+class exampleWebsocketClientApp : public ci::app::App {
    public:
     void setup() override;
     void mouseDown(MouseEvent event) override;
@@ -43,7 +39,7 @@ void exampleWebsocketClientApp::setup() {
 void exampleWebsocketClientApp::mouseDown(MouseEvent event) {}
 
 void exampleWebsocketClientApp::update() {
-    if (int(ci::app::getElapsedSeconds()) % 2 == 0) {
+    if (static_cast<int>(ci::app::getElapsedSeconds()) % 2 == 0) {
         std::shared_ptr<sitara::websocket::Connection> connection =
             mClient->getConnection(mConnectionId);
         if (connection->getStatus() == sitara::websocket::OPEN) {
@@ -56,11 +52,11 @@ void exampleWebsocketClientApp::update() {
 }
 
 void exampleWebsocketClientApp::draw() {
-    gl::clear(Color(0, 0, 0));
+    ci::gl::clear(Color(0, 0, 0));
 }
 
 CINDER_APP(exampleWebsocketClientApp,
-           RendererGl,
+           ci::app::RendererGl,
            [=](cinder::app::App::Settings* settings) {
                settings->setConsoleWindowEnabled();
            })

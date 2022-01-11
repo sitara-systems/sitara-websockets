@@ -1,8 +1,12 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
+#include <string>
 #include <system_error>
+#include <utility>
+#include <vector>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
@@ -16,25 +20,25 @@ class Server : public Endpoint {
     Server() : Endpoint() {
         mPort = 9002;
         init();
-    };
+    }
 
-    Server(int port) : Endpoint() {
+    explicit Server(int port) : Endpoint() {
         mPort = port;
         init();
-    };
+    }
 
     ~Server() {
         if (!mServer.stopped()) {
             mServer.stop_listening();
             mServer.stop();
         }
-    };
+    }
 
     void run() {
         mServer.listen(mPort);
         mServer.start_accept();
         mServer.run();
-    };
+    }
 
     void stop() {
         std::error_code errorCode;
@@ -84,7 +88,7 @@ class Server : public Endpoint {
         }
         // messagePtr->set_payload(message);
         // connection->recordMessage(messagePtr);
-    };
+    }
 
     void send(int id, void const* message, size_t length) {
         std::shared_ptr<Connection> connection = getConnection(id);
@@ -100,7 +104,7 @@ class Server : public Endpoint {
         }
         // messagePtr->set_payload(message, length);
         // connection->recordMessage(messagePtr);
-    };
+    }
 
     void send(
         int id,
@@ -141,7 +145,7 @@ class Server : public Endpoint {
                            websocketpp::server<websocketpp::config::asio>::
                                message_ptr message)> response) {
         mOnReceiveFns.push_back(response);
-    };
+    }
 
    protected:
     void init() {
@@ -167,7 +171,7 @@ class Server : public Endpoint {
         mServer.set_socket_init_handler(
             std::bind(&Server::onSocketInit, this, &mServer,
                       std::placeholders::_1, std::placeholders::_2));
-    };
+    }
 
     // these handlers should probably use a std::shared_ptr<Server>, but a
     // regular pointer will do for now...
@@ -182,7 +186,7 @@ class Server : public Endpoint {
             server->createConnection(wsConnection);
         newConnection->setStatus(ConnectionStatus::OPEN);
         newConnection->printStatus();
-    };
+    }
 
     static void onFail(Server* server,
                        websocketpp::server<websocketpp::config::asio>* wsServer,
@@ -195,7 +199,7 @@ class Server : public Endpoint {
             wsConnection = wsServer->get_con_from_hdl(handle);
         connection->setEndpoint(wsConnection->get_response_header("Server"));
         connection->setError(wsConnection->get_ec().message());
-    };
+    }
 
     static void onClose(
         Server* server,
@@ -213,7 +217,7 @@ class Server : public Endpoint {
                  wsConnection->get_remote_close_code())
           << "), Close Reason: " << wsConnection->get_remote_close_reason();
         connection->setError(s.str());
-    };
+    }
 
     static void onReceive(
         Server* server,
@@ -226,15 +230,15 @@ class Server : public Endpoint {
         }
         // connection->callOnReceiveFns(handle, message);
         // connection->recordMessage(message);
-    };
+    }
 
     static void onSocketInit(
         Server* server,
         websocketpp::server<websocketpp::config::asio>* wsServer,
         websocketpp::connection_hdl handle,
-        asio::ip::tcp::socket& socket) {
+        const asio::ip::tcp::socket& socket) {
         std::shared_ptr<Connection> connection = server->getConnection(handle);
-    };
+    }
 
     websocketpp::server<websocketpp::config::asio> mServer;
     std::vector<std::function<void(
@@ -243,5 +247,5 @@ class Server : public Endpoint {
         mOnReceiveFns;
     int mPort;
 };
-};  // namespace websocket
-};  // namespace sitara
+}  // namespace websocket
+}  // namespace sitara

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/connection_hdl.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
@@ -20,7 +23,7 @@ class Connection {
         mOnFailFn = nullptr;
         mOnCloseFn = nullptr;
         mOnReceiveFn = nullptr;
-    };
+    }
 
     ~Connection(){};
 
@@ -61,7 +64,7 @@ class Connection {
             "%s\n Messages Processed: %d\n",
             mUri.c_str(), getStatusString(mStatus).c_str(), mEndpoint.c_str(),
             mErrorReason.c_str(), mMessages.size());
-    };
+    }
 
     std::string getStatusString(ConnectionStatus status) {
         switch (status) {
@@ -135,7 +138,7 @@ class Connection {
             websocketpp::client<websocketpp::config::asio_client>::message_ptr
                 message)> response) {
         mOnReceiveFn = response;
-    };
+    }
 
     void callOnReceiveFn(
         websocketpp::connection_hdl handle,
@@ -144,7 +147,7 @@ class Connection {
         if (mOnReceiveFn) {
             mOnReceiveFn(handle, message);
         }
-    };
+    }
 
    protected:
     int mId;
