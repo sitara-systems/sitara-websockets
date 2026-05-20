@@ -33,9 +33,7 @@ DDPClient::DDPClient() : Client() {
     mOnRemovedFn = nullptr;
 }
 
-DDPClient::~DDPClient() {
-    Client::~Client();
-}
+DDPClient::~DDPClient() = default;
 
 int DDPClient::connect(const std::string& uri) {
     mConnectionId = Client::connect(uri);
@@ -55,7 +53,8 @@ int DDPClient::connect(const std::string& uri) {
             openMsg["support"] = Json::arrayValue;
             openMsg["support"].append("1");
 
-            send(mConnectionId, mJsonWriter.write(openMsg));
+            Json::StyledWriter writer;
+            send(mConnectionId, writer.write(openMsg));
         });
 
     connection->setOnReceiveFn(
@@ -98,7 +97,8 @@ int DDPClient::connect(const std::string& uri) {
                     response["id"] = receivedMsg["id"].asString();
                 }
 
-                send(mConnectionId, mJsonWriter.write(response));
+                Json::StyledWriter writer;
+                send(mConnectionId, writer.write(response));
             } else if (receivedMsg["msg"].asString() == "added") {
                 if (mOnAddedFn) {
                     mOnAddedFn(receivedMsg["collection"].asString(),
@@ -117,6 +117,7 @@ int DDPClient::connect(const std::string& uri) {
                                  receivedMsg["id"].asString());
                 }
             } else if (receivedMsg["msg"].asString() == "ready") {
+                std::lock_guard<std::mutex> lock(mSubscriptionMutex);
                 for (Json::Value::ArrayIndex i = 0;
                      i != receivedMsg["subs"].size(); i++) {
                     mSubscriptionStatus[receivedMsg["subs"][i].asString()] =
@@ -126,6 +127,7 @@ int DDPClient::connect(const std::string& uri) {
                 std::cout << "Received Error!" << std::endl;
                 std::cout << message->get_payload() << std::endl;
             } else if (receivedMsg["msg"].asString() == "nosub") {
+                std::lock_guard<std::mutex> lock(mSubscriptionMutex);
                 mSubscriptionStatus[receivedMsg["id"].asString()] =
                     ddp::SubscriptionStatus::UNSUBSCRIBED;
             }
@@ -140,13 +142,17 @@ bool DDPClient::isConnected() {
 
 ddp::SubscriptionStatus DDPClient::getSubscriptionStatus(
     const std::string& subscriptionName) {
-    if (mSubscriptionMap.find(subscriptionName) != mSubscriptionMap.end()) {
-        std::string subscriptionId = mSubscriptionMap[subscriptionName];
-        return mSubscriptionStatus[subscriptionId];
-    } else {
+    std::lock_guard<std::mutex> lock(mSubscriptionMutex);
+    auto nameIt = mSubscriptionMap.find(subscriptionName);
+    if (nameIt == mSubscriptionMap.end()) {
         // not subscribed yet
         return ddp::SubscriptionStatus::UNSUBSCRIBED;
     }
+    auto statusIt = mSubscriptionStatus.find(nameIt->second);
+    if (statusIt == mSubscriptionStatus.end()) {
+        return ddp::SubscriptionStatus::UNSUBSCRIBED;
+    }
+    return statusIt->second;
 }
 
 std::string DDPClient::subscribe(const std::string& name) {
@@ -160,11 +166,15 @@ std::string DDPClient::subscribe(const std::string& name) {
     subMsg["id"] = subscriptionId;
     subMsg["name"] = name;
 
-    send(mConnectionId, mJsonWriter.write(subMsg));
+    Json::StyledWriter writer;
+    send(mConnectionId, writer.write(subMsg));
 
-    mSubscriptionMap.insert(std::make_pair(name, subscriptionId));
-    mSubscriptionStatus.insert(
-        std::make_pair(subscriptionId, ddp::SubscriptionStatus::CONNECTING));
+    {
+        std::lock_guard<std::mutex> lock(mSubscriptionMutex);
+        mSubscriptionMap.insert(std::make_pair(name, subscriptionId));
+        mSubscriptionStatus.insert(std::make_pair(
+            subscriptionId, ddp::SubscriptionStatus::CONNECTING));
+    }
 
     return subscriptionId;
 }
@@ -174,7 +184,8 @@ void DDPClient::unsubscribe(const std::string& subscriptionId) {
     unsubMsg["msg"] = "unsub";
     unsubMsg["id"] = subscriptionId;
 
-    send(mConnectionId, mJsonWriter.write(unsubMsg));
+    Json::StyledWriter writer;
+    send(mConnectionId, writer.write(unsubMsg));
 }
 
 void DDPClient::setOnAddedFn(std::function<void(std::string collection,
@@ -214,7 +225,8 @@ std::string DDPClient::generateId() {
 }
 
 std::string DDPClient::toString(const Json::Value& json) {
-    return mJsonWriter.write(json);
+    Json::StyledWriter writer;
+    return writer.write(json);
 }
 }  // namespace websocket
 }  // namespace sitara

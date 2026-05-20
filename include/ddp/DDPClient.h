@@ -22,7 +22,9 @@
 
 #pragma once
 
+#include <atomic>
 #include <map>
+#include <mutex>
 #include <random>
 #include <string>
 
@@ -60,10 +62,10 @@ class DDPClient : public Client {
     std::string generateId();
     int mConnectionId;
     Json::Reader mJsonReader;
-    Json::StyledWriter mJsonWriter;
-    bool mIsConnected;
+    std::atomic<bool> mIsConnected;
     bool mIsReady;
     std::string mSession;
+    std::mutex mSubscriptionMutex;
     std::map<std::string, std::string> mSubscriptionMap;
     std::map<std::string, ddp::SubscriptionStatus> mSubscriptionStatus;
     std::function<void(std::string collection,
